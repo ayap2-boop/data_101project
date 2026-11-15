@@ -1,0 +1,239 @@
+---
+title: Regional Nintendo Video Game Sales
+subtitle: Report
+author: "Abraham Yap, Robert Krovatin, Mark Samuel"
+date: today
+format: pdf
+---
+
+Our research question is to find the sales of Nintendo games in each region per
+capita because we want to find out if Japan's sales are higher per capita
+compared to Europe and North America. To find this, we would divide the total 
+sales for Nintendo games from each region by the total population of each
+region. We anticipate that Japan's sales are higher per capita, due to Nintendo
+being a Japanese company and how it's loved by the people of all ages. Though,
+there's always a possibility that it can go the other way. 
+
+# Introduction
+
+We chose this project because we're all video game fans and wondered about 
+the amount of money some of our favorite games make. Our research question 
+covers games that are published by Nintendo. You will see that most
+Nintendo games have much higher sales in North America and Europe 
+compared to Japan. We figured this was due to the difference in population, 
+but we wondered if Japan's sales would be larger per capita? Most Nintendo games 
+have much higher sales in North America and Europe 
+compared to Japan. 
+
+
+# Data
+```{r}
+#| label: load-packages
+#| message: false
+#| echo: false
+#| warning: false
+library(tidyverse)
+library(tidymodels)
+library(ggplot2)
+```
+**Data Source**
+
+[Kaggle](https://www.kaggle.com/datasets/gregorut/videogamesales)
+
+**Dataset**
+
+For the final project, we will be using the `video_games_sales.csv’ dataset. 
+This dataset contains video game sales by region (NA, EU, JP, Other).
+
+\newpage
+**Data collection**
+
+The data set combines commercial sales and review details for video games. 
+Sales are represented in millions of units for geographic 
+regions as well as global. 
+Critic and user review scores were most likely collected from review-aggregation 
+sources like Metacritic. 
+
+**Variables**
+
+‘name’ - Game title
+
+‘platform’ - Console/platform
+
+‘year_of_release’ - Game release year
+
+‘genre’ - Game genre
+
+‘publisher’ - Publishing company
+
+‘NA_sales’ - Sales in North America [millions]
+
+‘EU_sales’ - Sales in Europe [millions]
+
+‘JP_sales’ - Sales in Japan [millions]
+
+‘other_sales’ - Sales in all other regions [millions]
+
+‘global_sales’ - Worldwide sales [millions] 
+
+‘critic_score’ - Aggregated critic score
+
+‘critic_count’ - Number of critic reviews used for ‘critic_score’
+
+‘user_score’ - Aggregated user score 
+
+‘user_count’ - Number of user ratings
+
+‘developer’ - Game developer
+
+‘rating’ - Age/ESRB-style rating [E, E10+, T, M] 
+
+**Summary of data**
+
+Rows: 16,719
+
+Columns: 16
+
+Sales ranges: Regional and worldwide sales within the data vary from extremely 
+large titles (80 million+ in global sales) to much lesser sold titles.
+
+Review scores: Both critic and user scores are present for between around 
+45-48% of observations. The average user score is about 71%, while the average 
+critic score is about 69%. 
+
+\newpage
+**Data cleaning steps**
+
+Step 1: Read in data using read.csv()
+
+Step 2: Convert user_score to numeric using mutate()
+
+Step 3: Convert year_of_release to integer using mutate()
+
+Step 4: Get rid of duplicate rows using distinct()
+
+\newpage
+**Approach to Question**
+
+First, we would have to filter by game publishers for games published by 
+Nintendo. We can take the sales of North America, Europe, and Japan (`NA_Sales`, 
+`EU_Sales`,`JP_Sales`) then divide them by the total population of these 
+respective regions. As of 2025, Google states that it's 617.3 million for 
+North America, 745 million for Europe, and 123.4 million for Japan. 
+This would show us the amount each person in that region spent on that game.
+
+Next would mutate variables for each of these capitas, let's call them
+"NA_Capita", "EU_Capita", "JP_Capita". To ensure that our result is a double or
+integer, we would use "as.numeric".Then, we would create a tibble to
+group all of these so it's easier to visualize.
+We're going to call it "capitas" containing (NA_Capita, EU_Capita, JP_Capita)
+and another tibble called "sales" containing (NA_Sales, EU_Sales, JP_Sales).
+  
+Finally, we would visualize this using a bar plot. The x-axis would be 
+"capitas" and the y-axis would be "sales". Then, we would fill each bar by 
+"capitas", so they're a different color. Finally, 
+it should show how much money each person spent on that Nintendo game.
+
+video_game_sales <- video_game_sales |>
+  filter(Publisher == `Nintendo`)
+  mutate(JP_Capita = as.numeric(JP_Sales / 123.4))
+print(JP_Capita)
+  
+video_game_sales <- video_game_sales |>
+  filter(Publisher == `Nintendo`) |>
+  mutate(EU_Capita = as.integer(EU_Sales / 745))
+print(EU_Capita)
+  
+video_game_sales <- video_game_sales |>
+  filter(Publisher == `Nintendo`) |>
+  mutate(NA_Capita = as.numeric(NA_Sales / 617.3))
+print(NA_Capita)
+  
+video_game_sales <- video_game_sales |>
+  tibble(capitas = 
+  c(JP_Capita, NA_Capita, EU_Capita),
+  sales = c(JP_Sales, NA_Capita, EU_Capita)
+  )
+
+video_game_sales |>
+  ggplot(aes(x = capitas, y = sales)) +
+  geom_bar(fill = capitas) +
+  labs(
+  x = "Region sales per capita",
+  y = "Sales of each region",
+  title = "Sales of each region per capita"
+) +
+theme(legend.position = "right")
+  
+\newpage
+# Analysis
+  
+```{r}
+#| message: false
+library(tidyverse)
+
+video_game_sales <- read_csv("data/video_games_sales.csv")
+
+video_game_sales <- video_game_sales |>
+  filter(Publisher == "Nintendo") |>
+  mutate(
+    NorthA = NA_Sales / 617.3,
+    EU = EU_Sales / 745,
+    JP = JP_Sales / 123.4
+  )
+
+capita_long <- video_game_sales |>
+  select(Name, NorthA, EU, JP) |>
+  pivot_longer(
+    cols = c(NorthA, EU, JP),
+    names_to = "Region",
+    values_to = "PerCapitaSales"
+  )
+
+ggplot(capita_long, aes(x = Region, y = PerCapitaSales, fill = Region)) +
+  geom_col() +
+  labs(
+    title = "Per-Capita Video Game Sales by Region (Nintendo)",
+    x = "Region",
+    y = "Games Sold",
+  ) +
+  theme_minimal()
+
+glimpse(capita_long)
+```
+# Discussion
+
+This shows that Japan had the highest per-capita video game sales
+among the three regions, while the EU had the lowest. The differences were 
+large, suggesting that video game interest highly varies among the regions, 
+with certain markets showing more demand than the others. When examining 
+, we observed the same pattern: Japan had the highest sales per-capita, 
+suggesting that consumers of a region may be more willing to purchase titles 
+from that region. Overall, the results indicate that Japan has the highest 
+video game sales per-capita both in Nintendo and all other publishers.
+
+The data does, however, have certain factors which may limit our analysis of 
+the data. The sales data is collected on a regional level which could result 
+in inaccurate data interpretation. Also, the sales are the cumulative since 
+realease and this dataset is 3 years old. On top of that, this data includes
+games from the 1980s, far before digital purchases. It's possible that the data
+doesn't account for digital game purchases which would cause inaccuracies in our
+analysis.
+
+To improve the data analysis, we could consider looking for data sets that have 
+more specific and precise variables like demographic, digital versus physical 
+sales, etc. in order to make more in-depth interpretations.
+
+\newpage
+# References
+
+Etezadi, Hamed. (2022). Kaggle Notebook | Video Game Sales Prediction | 
+Version 1. https://github.com/hetezadi/ML_MV_KaggleProjects/blob/main/
+video-game-sales-prediction.ipynb
+
+Google. (2025). Google | Population of North America | https://www.google.com/search?q=population+of+north+america
+
+Google. (2025). Google | Population of Japan | https://www.google.com/search?q=population+of+japan
+
+Google (2025). Google | Population of Europe | https://www.google.com/search?q=population+of+europe
+
